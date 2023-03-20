@@ -49,19 +49,18 @@ version: '3.7'
 services:
   apcupsd:
     image: freender/apcupsd:latest
-    container_name: apcupsd
+    hostname: Network
+    container_name: apcupsd  
     devices:
-      - /dev/usb/hiddev0 # This device needs to match what the APC UPS on your system uses.
+      - /dev/usb/hiddev0
     ports:
-      - 3551:3551
-    environment:
-      - TZ=${TZ}
+      - 13551:3551
+    environment: # Delete or comment out any environment variables you don't wish to change
+      TZ: "America/New_York" # Default value is Europe/London
     volumes:
       - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
-      - /home/pi/docker/apcupsd/credentials:/etc/telegram
-    restart: unless-stopped
-volumes:
-  config:
+      - /home/pi/docker/apcupsd:/etc/apcupsd
+    restart: always
 ```
 <br>
 
