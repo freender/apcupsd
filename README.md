@@ -1,4 +1,4 @@
-This is a simple Ubuntu base with <code>apcupsd</code> installed. It manages and monitors a USB Connected UPS Device, and has the ability to gracefully shut down the host computer in the event of a prolonged power outage.  This is done with no customisation to the host whatsoever, there's no need for cron jobs on the host, or trigger files and scripts.  Everything is done within the container.
+This is a simple Ubuntu base with <code>apcupsd</code> installed. It manages and monitors a USB Connected UPS Device, and has the ability to gracefully shut down the host computer in the event of a prolonged power outage and notify via Telegram.  This is done with no customisation to the host whatsoever, there's no need for cron jobs on the host, or trigger files and scripts.  Everything is done within the container.
 
 <b>Use Cases :</b><br>
 Use this image if your UPS is connected to your docker host by USB Cable and you don't want to run <code>apcupsd</code> in the physical host OS.
@@ -7,26 +7,7 @@ Equally, this container can be run on any other host to monitor another instance
 
 The purpose of this image is to containerise the APC UPS monitoring daemon so that it is separated from the OS, yet still has access to the UPS via USB Cable.  
 
-It is not necessary to run this container in <code>privileged</code> mode.  Instead, we attach only the specific USB Device to the container using the <code>--device</code> directive in the <code>docker run</code> command.  However if you want the container to shut down the host when UPS battery power is critically low, then it is necessary to run the container in privileged mode and also expose the dbus socket responsible for triggering system shutdown, from the host to this container. See below in the Configuration section.
-
-Other apcupsd images i've seen are for exporting monitoring data to grafana or prometheus, this image does not do that, though it does expose port 3551 to the network allowing for the apcupsd monitorig data to be captured using those other containers to handle flow of data into your preferred monitoring solution. Persoanlly, I use collectd to extract data from the apcupsd container, graphite capture the data and grafana to present pretty pictures.
-
-
 <b>Configuration :</b>
-
-Very little configuration is currently required for this image to work, though you may be required to tweak the USB device that is passed through to your container by docker.
-
-1) Create directory to store telegram bot_token and chat_id
-/home/pi/docker/apcupsd/credentials
-2) Create chatid file
-```vim /home/pi/docker/apcupsd/credentials/chatid```
-and populate chat_id, example:
-```-1000000000000```
-3) Create token file
-```vim /home/pi/docker/apcupsd/credentials/token```
-and populate token, example:
-```1000000000:AAAAAAAAAAAAAAAAAA```
-
 
 Create the container with the following command.
 
@@ -34,12 +15,13 @@ Create the container with the following command.
 docker run -d --privileged \
   --name=apcupsd  \
   -e TZ=Europe/London \
+  -e TELEGRAM_TOKEN=put token here, e.g. 1000000000:AAAAAAAAAAAAAAAAAA \
+  -e TELEGRAM_CHATID=put chat_id here>, e.g. -1000000000000 \
   --device=/dev/usb/hiddev1 \
   --restart unless-stopped \
   -p=3551:3551 \
   -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
-  -v /home/pi/docker/apcupsd/credentials:/etc/telegram \
-  freender/apcupsd:latest
+  freender/apcupsd:main
 ```
 
 And, for those using tools with docker-compose, here's an example:
@@ -48,18 +30,21 @@ And, for those using tools with docker-compose, here's an example:
 version: '3.7'
 services:
   apcupsd:
-    image: freender/apcupsd:latest
+    #image: ghcr.io/freender/apcupsd:main
+    build: https://github.com/freender/apcupsd.git
+    pull_policy: build
     hostname: Network
-    container_name: apcupsd  
+    container_name: apcupsd
     devices:
       - /dev/usb/hiddev0
     ports:
       - 13551:3551
-    environment: # Delete or comment out any environment variables you don't wish to change
+    environment: 
       TZ: "America/New_York" # Default value is Europe/London
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN} # Telegram BOT token
+      TELEGRAM_CHATID: ${TELEGRAM_CHATID} # Telegram CHATID
     volumes:
       - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
-      - /home/pi/docker/apcupsd:/etc/apcupsd
     restart: always
 ```
 <br>
