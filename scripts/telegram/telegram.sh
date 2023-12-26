@@ -18,9 +18,8 @@ done
 
 
 ############
-TELEGRAM=/etc/telegram
-BOT_TOKEN=$(< $TELEGRAM/token);
-CHATID=$(< $TELEGRAM/chatid);
+BOT_TOKEN=${TELEGRAM_TOKEN};
+CHATID=${TELEGRAM_CHATID};
 MESSAGE=$(echo -e "$(hostname): $TITLE\n$MESSAGE");
 
 curl -G -s -k "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" --data-urlencode "chat_id=$CHATID" --data-urlencode "text=$MESSAGE" ;
