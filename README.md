@@ -1,3 +1,5 @@
+# APCUPSD
+
 This is a simple Ubuntu base with <code>apcupsd</code> installed. It manages and monitors a USB Connected UPS Device, and has the ability to gracefully shut down the host computer in the event of a prolonged power outage and notify via Telegram.  This is done with no customisation to the host whatsoever, there's no need for cron jobs on the host, or trigger files and scripts.  Everything is done within the container.
 
 <b>Use Cases :</b><br>
